@@ -1,23 +1,31 @@
+// SavedNewsScreen.kt
 package com.example.bottomnavigationnewsbar.screens
 
-import androidx.compose.foundation.layout.Column
+import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.example.bottomnavigationnewsbar.components.ArticleItem
+import com.example.bottomnavigationnewsbar.data.toArticle
 import com.example.bottomnavigationnewsbar.navigation.ScreenNews
+import com.example.bottomnavigationnewsbar.viewmodels.NewsViewModel
+import com.google.gson.Gson
 
 @Composable
-fun SavedNewsScreen(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "Saved News")
-        Button(onClick = {
-            navController.navigate(ScreenNews.Article.route)
-        }) {
-            Text("Voir l'article")
+fun SavedNewsScreen(nav: NavController, vm: NewsViewModel) {
+    val favs by vm.savedArticles.observeAsState(initial = emptyList())
+    LazyColumn(Modifier.fillMaxSize()) {
+        items(favs) { ent ->
+            val art = ent.toArticle()
+            ArticleItem(art) {
+                val js = Uri.encode(Gson().toJson(art))
+                nav.navigate("${ScreenNews.Article.route}?articleJson=$js")
+            }
         }
     }
 }

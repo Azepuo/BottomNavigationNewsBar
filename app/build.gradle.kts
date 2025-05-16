@@ -90,4 +90,10 @@ dependencies {
 
     // Gson (pour la sérialisation/désérialisation si besoin pour la navigation)
     implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("androidx.room:room-runtime:2.5.1")
+    ksp ("androidx.room:room-compiler:2.5.1")
+    implementation ("androidx.room:room-ktx:2.5.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation ("androidx.compose.runtime:runtime-livedata:<compose-version>")
+
 }

@@ -1,26 +1,20 @@
+// MainActivity.kt
 package com.example.bottomnavigationnewsbar
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode.Companion.Screen
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.createGraph
 import androidx.navigation.navArgument
 import com.example.bottomnavigationnewsbar.components.BottomNavigationBar
-import com.example.bottomnavigationnewsbar.models.Article
 import com.example.bottomnavigationnewsbar.navigation.ScreenNews
 import com.example.bottomnavigationnewsbar.repository.NewsRepository
 import com.example.bottomnavigationnewsbar.screens.AllNewsScreen
@@ -30,54 +24,50 @@ import com.example.bottomnavigationnewsbar.screens.SavedNewsScreen
 import com.example.bottomnavigationnewsbar.ui.theme.BottomNavigationNewsBarTheme
 import com.example.bottomnavigationnewsbar.viewmodels.NewsViewModel
 import com.example.bottomnavigationnewsbar.viewmodels.NewsViewModelProviderFactory
-
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val newsRepository = NewsRepository()
-        val viewModelFactory = NewsViewModelProviderFactory(newsRepository)
+        val repository = NewsRepository(applicationContext)
+        val factory = NewsViewModelProviderFactory(repository)
 
         setContent {
-            val newsViewModel: NewsViewModel = viewModel(factory = viewModelFactory)
-            MainScreen(newsViewModel)
+            BottomNavigationNewsBarTheme {
+                val vm: NewsViewModel = viewModel(factory = factory)
+                MainScreen(vm)
+            }
         }
     }
 }
 
 @Composable
-fun MainScreen(newsViewModel: NewsViewModel) {
-    val navController = rememberNavController()
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(navController)
-        }
-    ) { innerPadding ->
+fun MainScreen(vm: NewsViewModel) {
+    val nav = rememberNavController()
+    Scaffold(bottomBar = { BottomNavigationBar(nav) }) { p ->
         NavHost(
-            navController = navController,
+            navController = nav,
             startDestination = ScreenNews.BreakingNews.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(p)
         ) {
             composable(ScreenNews.BreakingNews.route) {
-                BreakingNewsScreen(navController, newsViewModel)
+                BreakingNewsScreen(nav, vm)
             }
             composable(ScreenNews.AllNews.route) {
-                AllNewsScreen(navController, newsViewModel)
+                AllNewsScreen(nav, vm)
             }
             composable(ScreenNews.SavedNews.route) {
-                SavedNewsScreen(navController)
+                SavedNewsScreen(nav, vm)
             }
             composable(
-                route = "${ScreenNews.Article.route}/{articleUrl}",
-                arguments = listOf(navArgument("articleUrl") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val articleUrl = backStackEntry.arguments?.getString("articleUrl")
-                articleUrl?.let {
-                    ArticleScreen(it) // On passe directement l’URL à ArticleScreen
+                "${ScreenNews.Article.route}?articleJson={articleJson}",
+                arguments = listOf(navArgument("articleJson") { type = NavType.StringType })
+            ) { e ->
+                e.arguments?.getString("articleJson")?.let { json ->
+                    val art = Gson().fromJson(json, com.example.bottomnavigationnewsbar.models.Article::class.java)
+                    ArticleScreen(article = art, newsViewModel = vm)
                 }
             }
-
         }
     }
 }
